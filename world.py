@@ -453,9 +453,13 @@ class UKFROSRobot(ROSRobot):
     def localize(self, data):
         if data.data_type == DataType.UWB:
             self.ukf.update(data)
+        else:
+            self.ukf.predict(data)
 
-            self.pose = self.ukf.x[:UKFState.Z + 1]
-            self.t = self.ukf.x[UKFState.YAW]
+        # print(self.pose)
+
+        self.pose = self.ukf.x[:UKFState.Z + 1]
+        self.t = self.ukf.x[UKFState.YAW]
 
         return self.pose, self.t
 
