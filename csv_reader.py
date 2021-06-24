@@ -40,8 +40,6 @@ class CSVReader:
 
                 self.sensor_data[id].append(processed)
 
-                print(processed)
-
     def process_imu(self, t, line_data):
         data = DataPoint(DataType.IMU, np.asarray(tuple(map(float, line_data))), t)
 
@@ -54,8 +52,8 @@ class CSVReader:
         line_data = tuple(map(float, line_data))
 
         d = line_data[0]
-        anchor = line_data[1:4]
-        tag = line_data[4:]
+        anchor = np.array(line_data[1:4])
+        tag = np.array(line_data[4:])
 
         data = DataPoint(DataType.UWB, d, t, extra={
             "anchor": anchor,
