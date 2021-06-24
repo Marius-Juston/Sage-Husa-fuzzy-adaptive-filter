@@ -80,7 +80,7 @@ class World(BaseWorld):
 
         rsme = np.append(rsme, rsme_t)
 
-        return rsme
+        return np.sqrt(rsme)
 
     def reset(self):
         self.t = 0
