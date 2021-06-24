@@ -81,7 +81,12 @@ class World:
 
             r.move(self.dt)
 
-            pose = r.get_pose()
+            if isinstance(r, UKFRobot):
+                pose = r.get_sensor_pose()
+                robot_data['w'].append(r.get_pose())
+            else:
+                pose = r.get_pose()
+                robot_data['w'].append(pose)
             actual_t = r.get_heading()
 
             d = np.linalg.norm(np.array(sensor) - np.array(pose))
@@ -102,11 +107,10 @@ class World:
             robot_data['e'].append(estimated_pose)
             robot_data['e_t'].append(estimated_t)
             robot_data['w_t'].append(actual_t)
-            robot_data['w'].append(pose)
 
         self.t += self.dt
 
-    def plot(self, ranges=False):
+    def plot(self, ranges=False, offset_sensor=False):
         f: Figure = plt.gcf()
 
         a = plt.figure().gca()
@@ -136,6 +140,17 @@ class World:
             a.plot(x, estimated_t, label=f'expected {i}')
             a.plot(x, actual_t, label=f'actual {i}')
 
+            if offset_sensor:
+                if isinstance(r['robot'], UKFRobot):
+                    s_p = np.array(r['robot'].sensor_pose)
+
+                    self.world.plot(s_p[:, 0], s_p[:, 1])
+                #     anchor_pose = np.array(r['robot'].ukf.measurement_predictor.data)
+                #     i = 0
+                #
+                #     while i < 17:
+                #         self.world.plot(anchor_pose[:, 0, i], anchor_pose[:, 1, i])
+                #         i += 1
             if ranges:
                 self.ranges.scatter(x, range, label=f'robot {i}')
 
@@ -242,14 +257,37 @@ class UKFRobot(Robot):
             }
         }
 
+        self.sensor_pose = []
+
         self.ukf = FusionUKF(sensor_std, speed_noise_std=speed_noise_std, yaw_rate_noise_std=yaw_rate_noise_std,
                              alpha=alpha, beta=beta, k=k)
         self.ukf.initialize(np.array([*self.init_pose, v, t, w]), np.identity(6) / 100, 0)
 
+        self.sensor = np.array([0, -.162, .184]) * 10
+
+    def rotation_matrix(self, angle):
+        s = np.sin(angle)
+        c = np.cos(angle)
+
+        return ((c, -s, 0),
+                (s, c, 0),
+                (0, 0, 1))
+
+    def get_pose(self):
+        return self.pose
+
+    def get_sensor_pose(self):
+        rot = self.rotation_matrix(self.t)
+
+        p = self.pose + rot @ self.sensor
+        self.sensor_pose.append(p)
+
+        return p
+
     def localize(self, d, anchor_pose, w):
         data = DataPoint(DataType.UWB, d, w.t * 1e9, extra={
             "anchor": anchor_pose,
-            'sensor_offset': np.array([0, 0, 0])
+            'sensor_offset': self.sensor
         })
 
         # print(self.ukf.x[:3])
@@ -318,6 +356,6 @@ if __name__ == '__main__':
         rsme = w.calculate_rsme(i)
         print(i, "RSME", rsme, np.sum(rsme[:3]))
 
-    w.plot(True)
+    # w.plot(ranges=False, offset_sensor=False)
 
-    plt.show()
+    # plt.show()
