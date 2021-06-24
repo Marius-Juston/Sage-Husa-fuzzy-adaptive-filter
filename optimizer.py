@@ -70,8 +70,8 @@ def run_UKF(x):
     return np.sum(rsme / data)
 
 
-def run(minimizer, bounds, x0=None, n_calls=60, n=42):
-    return minimizer(run_UKF, bounds, n_calls=n_calls, random_state=n, x0=x0, n_jobs=6, initial_point_generator='lhs')
+def run(world, minimizer, bounds, x0=None, n_calls=60, n=42):
+    return minimizer(world, bounds, n_calls=n_calls, random_state=n, x0=x0, n_jobs=6, initial_point_generator='lhs')
 
 
 if __name__ == '__main__':
@@ -87,7 +87,7 @@ if __name__ == '__main__':
           -4.405076722968345]
 
     # gp_res = run(gp_minimize, bounds, x0, n=None, n_calls=200)
-    gp_res = run(gp_minimize, bounds, x0, n=42, n_calls=200)
+    gp_res = run(run_UKF, gp_minimize, bounds, x0, n=42, n_calls=200)
     # gp_res = run(gbrt_minimize, bounds, x0, n=42)
 
     # fig:Figure = plt.figure()
@@ -113,7 +113,3 @@ if __name__ == '__main__':
 
 # conda install scikit-learn-intelex
 # python -m sklearnex my_application.py
-
-# 638
-# 0.2
-# 6
