@@ -534,9 +534,12 @@ def ros_world():
                     # None
                     ))
 
-    while not w.empty():
-        print("Step:", w.index)
-        w.step()
+    try:
+        while not w.empty():
+            print("Step:", w.index)
+            w.step()
+    except np.linalg.LinAlgError:
+        pass
 
     rsme = w.calculate_rsme(0)
     print("RSME", rsme, np.sum(rsme[:3]))
