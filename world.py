@@ -358,7 +358,7 @@ class UKFRobot(Robot):
         return self.ukf.x[:UKFState.Z + 1], self.ukf.x[UKFState.YAW]
 
 
-if __name__ == '__main__':
+def ukf_test_world():
     w = World(dt=.1, large_d_p=0.0)
     # w.add_robot(RandomRobot(v=1., w=.2))
 
@@ -416,6 +416,25 @@ if __name__ == '__main__':
         rsme = w.calculate_rsme(i)
         print(i, "RSME", rsme, np.sum(rsme[:3]))
 
-    # w.plot(ranges=False, offset_sensor=False)
+    w.plot(ranges=False, offset_sensor=False, large_errors=True)
 
-    # plt.show()
+    plt.show()
+
+
+def ros_world():
+    w = ROSWorld('out.csv')
+
+    while not w.empty():
+        w.step()
+
+    rsme = w.calculate_rsme(0)
+    print("RSME", rsme, np.sum(rsme[:3]))
+
+    w.plot(ranges=False, offset_sensor=False, large_errors=True)
+
+    plt.show()
+
+
+if __name__ == '__main__':
+    ukf_test_world()
+    ros_world()
