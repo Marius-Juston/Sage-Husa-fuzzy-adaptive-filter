@@ -231,7 +231,7 @@ class ROSWorld(BaseWorld):
 
         self.index += 1
 
-    def plot(self, ranges=False, offset_sensor=False, large_errors=False, interpolation=True):
+    def plot(self, ranges=False, offset_sensor=False, large_errors=False, interpolation=False):
         f: Figure = plt.gcf()
 
         if ranges:
