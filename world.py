@@ -323,7 +323,7 @@ class UKFRobot(Robot):
                              alpha=alpha, beta=beta, k=k)
         self.ukf.initialize(np.array([*self.init_pose, v, t, w]), np.identity(6) / 100, 0)
 
-        self.sensor = np.array([0, -.162, .184]) * 10
+        self.sensor = np.array([0, -.162, .184])
 
     def rotation_matrix(self, angle):
         s = np.sin(angle)
