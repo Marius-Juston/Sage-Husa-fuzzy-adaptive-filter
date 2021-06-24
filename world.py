@@ -428,9 +428,9 @@ class ROSRobot(ABC):
 
 
 class UKFROSRobot(ROSRobot):
-    def __init__(self, init_pose=None, t=0, v=0, w=0, uwb_std=1.0001,
-                 odometry_std=(11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001), speed_noise_std=3.9001,
-                 yaw_rate_noise_std=4.9001, alpha=1, beta=0, k=None) -> None:
+    def __init__(self, init_pose, inital_time, t=0, v=0, w=0, uwb_std=1.0001,
+                 odometry_std=(11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001), speed_noise_std=.0101,
+                 yaw_rate_noise_std=.01001, alpha=1, beta=0, k=None, P=None) -> None:
         super().__init__(init_pose, t)
         self.init_pose = init_pose
 
@@ -447,11 +447,12 @@ class UKFROSRobot(ROSRobot):
 
         self.sensor_pose = []
 
+        if P is None:
+            P = np.identity(6)
+
         self.ukf = FusionUKF(sensor_std, speed_noise_std=speed_noise_std, yaw_rate_noise_std=yaw_rate_noise_std,
                              alpha=alpha, beta=beta, k=k)
-        self.ukf.initialize(np.array([*self.init_pose, v, t, w]), np.identity(6) / 100, 0)
-
-        self.sensor = np.array([0, -.162, .184])
+        self.ukf.initialize(np.array([*self.init_pose, v, t, w]), P, inital_time)
 
     def localize(self, data):
         if data.data_type == DataType.UWB:
