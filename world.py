@@ -191,8 +191,12 @@ class ROSWorld(BaseWorld):
         self.csv.process()
         self.index = 0
 
-    def add_robot(self, robot):
-        pass
+        self.robot = None
+        self.estimated_pose = []
+        self.estimated_heading = []
+
+    def set_robot(self, robot):
+        self.robot = robot
 
     def calculate_rsme(self, robot_id):
         pass
@@ -478,7 +482,12 @@ def ukf_test_world():
 def ros_world():
     w = ROSWorld('out.csv')
 
+    init_pose = w.csv.sensor_data[DataType.GROUND_TRUTH][0].measurement_data
+
+    w.set_robot(UKFROSRobot(init_pose[:3]))
+
     while not w.empty():
+        print("Step:", w.index)
         w.step()
 
     rsme = w.calculate_rsme(0)
@@ -490,5 +499,5 @@ def ros_world():
 
 
 if __name__ == '__main__':
-    ukf_test_world()
+    # ukf_test_world()
     ros_world()
