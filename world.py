@@ -183,6 +183,42 @@ class World(BaseWorld):
             self.ranges.legend()
 
 
+class ROSWorld(BaseWorld):
+    def __init__(self, csv_file) -> None:
+        super().__init__()
+
+        self.csv = CSVReader(csv_file)
+        self.csv.process()
+        self.index = 0
+
+    def add_robot(self, robot):
+        pass
+
+    def calculate_rsme(self, robot_id):
+        pass
+
+    def reset(self):
+        pass
+
+    def empty(self):
+        return self.index < len(self.csv.sequential_data)
+
+    def step(self):
+        data_point = self.csv.sequential_data[self.index]
+        self.index += 1
+
+    def plot(self, ranges=False, offset_sensor=False, large_errors=False):
+        f: Figure = plt.gcf()
+
+        if ranges:
+            self.world, self.ranges, self.angles = f.subplots(ncols=3)
+        else:
+            self.world, self.angles = f.subplots(ncols=2)
+        self.world.set_aspect('equal')
+
+        ground_truth = np.array([i.measurement_data for i in self.csv.sensor_data[DataType.GROUND_TRUTH]])
+
+
 class Robot(ABC):
 
     def __init__(self, pose=None, t: float = 0, v: float = 0, w: float = 0) -> None:
