@@ -31,6 +31,7 @@ class World:
         self.large_d_p = large_d_p
         self.d_std = d_std
         self.uwb_sensors = []
+        self.large_errors = []
         self.robots: List[Dict[str, Any]] = []
 
     def add_uwb(self, pose):
@@ -95,6 +96,7 @@ class World:
 
             if will_large < self.large_d_p:
                 noise = np.random.normal(0, self.large_d_std)
+                self.large_errors.append(r.get_pose())
             else:
                 noise = np.random.normal(0, self.d_std)
 
@@ -110,7 +112,7 @@ class World:
 
         self.t += self.dt
 
-    def plot(self, ranges=False, offset_sensor=False):
+    def plot(self, ranges=False, offset_sensor=False, large_errors=False):
         f: Figure = plt.gcf()
 
         a = plt.figure().gca()
@@ -133,6 +135,9 @@ class World:
 
             x = np.arange(0, len(estimated)) * self.dt
 
+            if len(self.large_errors) > 0 and large_errors:
+                large_errors = np.asarray(self.large_errors)
+                self.world.scatter(large_errors[:, 0], large_errors[:, 1], zorder=10)
             self.world.plot(estimated[:, 0].flatten(), estimated[:, 1].flatten(), label=f'actual {i}')
             self.world.plot(actual[:, 0].flatten(), actual[:, 1].flatten(), label=f'expected {i}')
             self.angles.plot(x, estimated_t, label=f'expected {i}')
