@@ -1,6 +1,8 @@
 from typing import Dict, Callable, List, Any
 
-from ukf.datapoint import DataType
+import numpy as np
+
+from ukf.datapoint import DataType, DataPoint
 
 
 class CSVReader:
@@ -10,7 +12,7 @@ class CSVReader:
         self.processor = {
             DataType.UWB: self.process_uwb,
             DataType.IMU: self.process_imu,
-            DataType.GROUND_TRUTH: self.process_ground_truth,
+            DataType.GROUND_TRUTH: self.process_odom,
             DataType.ODOMETRY: self.process_odom
         }
 
@@ -19,42 +21,57 @@ class CSVReader:
         self.ground_truth = []
         self.sequential_data = []
         self.sensor_data = dict()
-        self.sensor_data.setdefault([])
 
     def process(self):
-        self.processor: Dict[int, Callable[[List[str]], Any]]
+        self.processor: Dict[int, Callable[[int, List[str]], Any]]
 
         with open(self.csv_file) as file:
             for line in file.readlines():
                 line_data = line.split(',')
                 id, t = map(int, line_data[:2])
 
-                processed = self.processor[id](line_data[2:])
+                if id not in self.sensor_data:
+                    self.sensor_data[id] = []
 
-                self.sequential_data.append(processed)
+                processed = self.processor[id](t, line_data[2:])
+
+                if id != DataType.GROUND_TRUTH:
+                    self.sequential_data.append(processed)
+
                 self.sensor_data[id].append(processed)
 
-    def process_imu(self, line_data):
+                print(processed)
+
+    def process_imu(self, t, line_data):
+        data = DataPoint(DataType.IMU, np.asarray(tuple(map(float, line_data))), t)
+
+        return data
+
+    def process_uwb(self, t, line_data):
+        # anchor_distance,
+        # anchor_pose[0], anchor_pose[1], anchor_pose[2],
+        # tag[0], tag[1], tag[2]
         line_data = tuple(map(float, line_data))
 
-        orientation = line_data[:4]
-        angl_vel = line_data[4:7]
-        lin_acc = line_data[7:]
+        d = line_data[0]
+        anchor = line_data[1:4]
+        tag = line_data[4:]
 
-        return orientation, angl_vel, lin_acc
+        data = DataPoint(DataType.UWB, d, t, extra={
+            "anchor": anchor,
+            'sensor_offset': tag
+        })
 
-    def process_uwb(self, line_data):
-        pass
+        return data
 
-    def process_odom(self, line_data):
+    def process_odom(self, t, line_data):
         # id, t, px, py, pz, v, theta, theta_yaw, msg.pose.pose.orientation.x,
         # msg.pose.pose.orientation.y,
         # msg.pose.pose.orientation.z,
         # msg.pose.pose.orientation.w
-        pass
+        data = DataPoint(DataType.ODOMETRY, np.array(tuple(map(float, line_data))), t)
 
-    def process_ground_truth(self, line_data):
-        pass
+        return data
 
 
 if __name__ == '__main__':
