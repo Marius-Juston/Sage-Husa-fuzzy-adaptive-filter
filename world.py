@@ -228,6 +228,10 @@ class ROSWorld(BaseWorld):
         self.world.set_aspect('equal')
 
         ground_truth = np.array([i.measurement_data for i in self.csv.sensor_data[DataType.GROUND_TRUTH]])
+        esimtated = np.array(self.estimated_pose)
+
+        self.world.plot(ground_truth[:, 0], ground_truth[:, 1])
+        self.world.plot(esimtated[:, 0], esimtated[:, 1])
 
 
 class Robot(ABC):
