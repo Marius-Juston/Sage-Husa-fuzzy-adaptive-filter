@@ -208,7 +208,14 @@ class ROSWorld(BaseWorld):
         return self.index >= len(self.csv.sequential_data)
 
     def step(self):
-        data_point = self.csv.sequential_data[self.index]
+        if self.robot is not None:
+            data_point = self.csv.sequential_data[self.index]
+
+            self.robot.localize(data_point)
+            self.estimated_pose.append(self.robot.get_pose())
+            self.estimated_heading.append(self.robot.get_heading())
+
+
         self.index += 1
 
     def plot(self, ranges=False, offset_sensor=False, large_errors=False):
