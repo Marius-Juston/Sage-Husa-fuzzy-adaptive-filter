@@ -74,7 +74,7 @@ def run(world, minimizer, bounds, x0=None, n_calls=60, n=42):
     return minimizer(world, bounds, n_calls=n_calls, random_state=n, x0=x0, n_jobs=6, initial_point_generator='lhs')
 
 
-if __name__ == '__main__':
+def ukf_optimizer():
     start = time()
 
     bounds = [(0.005, .5), (0.005, 5), (0.005, 2.5), (0.001, 2.), (-1., 3.), (-6., 6.)]
@@ -111,5 +111,13 @@ if __name__ == '__main__':
     # fig.show()
     plt.show()
 
+def run_UKF_ROS():
+    pass
+
+def ukf_ros_optimizer():
+    pass
+
+if __name__ == '__main__':
+    ukf_optimizer()
 # conda install scikit-learn-intelex
 # python -m sklearnex my_application.py
