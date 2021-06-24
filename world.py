@@ -201,7 +201,7 @@ class ROSWorld(BaseWorld):
         pass
 
     def empty(self):
-        return self.index < len(self.csv.sequential_data)
+        return self.index >= len(self.csv.sequential_data)
 
     def step(self):
         data_point = self.csv.sequential_data[self.index]
