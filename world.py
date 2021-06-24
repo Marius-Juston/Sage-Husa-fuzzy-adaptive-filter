@@ -199,7 +199,7 @@ class ROSWorld(BaseWorld):
         self.robot = robot
 
     def calculate_rsme(self, robot_id):
-        pass
+        return [0, 0, 0, 0]
 
     def reset(self):
         pass
