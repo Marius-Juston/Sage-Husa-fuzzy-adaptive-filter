@@ -10,7 +10,7 @@ from ukf.datapoint import DataType, DataPoint
 from ukf.fusion_ukf import FusionUKF
 from ukf.state import UKFState
 
-np.random.seed(42)
+np.random.seed(421)
 
 
 def angle_diff(angle1, angle2):
@@ -229,10 +229,9 @@ class ROSWorld(BaseWorld):
             self.estimated_pose.append(self.robot.get_pose())
             self.estimated_heading.append(self.robot.get_heading())
 
-
         self.index += 1
 
-    def plot(self, ranges=False, offset_sensor=False, large_errors=False):
+    def plot(self, ranges=False, offset_sensor=False, large_errors=False, interpolation=True):
         f: Figure = plt.gcf()
 
         if ranges:
@@ -243,6 +242,10 @@ class ROSWorld(BaseWorld):
 
         ground_truth = np.array([i.measurement_data for i in self.csv.sensor_data[DataType.GROUND_TRUTH]])
         esimtated = np.array(self.estimated_pose)
+
+        if interpolation:
+            inter_gts = np.array(self.ground_truths)
+            self.world.plot(inter_gts[:, 0], inter_gts[:, 1], zorder=-1, linewidth=4)
 
         self.world.plot(ground_truth[:, 0], ground_truth[:, 1])
         self.world.plot(esimtated[:, 0], esimtated[:, 1])
