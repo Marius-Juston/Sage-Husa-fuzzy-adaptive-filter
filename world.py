@@ -194,12 +194,21 @@ class ROSWorld(BaseWorld):
         self.robot = None
         self.estimated_pose = []
         self.estimated_heading = []
+        self.ground_truths = []
+        self.ground_truth_index = 0
+
+    def interpolate_pose(self, i_pose, i_t, f_pose, f_t, x_t):
+        o = i_pose + (x_t - i_t) * (f_pose - i_pose) / (f_t - i_t)
+
+        return o
 
     def set_robot(self, robot):
         self.robot = robot
 
     def calculate_rsme(self, robot_id):
-        return [0, 0, 0, 0]
+        rsme = np.mean((np.array(self.estimated_pose) - np.array(self.ground_truths)) ** 2, axis=0)
+
+        return np.sqrt(rsme)
 
     def reset(self):
         pass
@@ -210,6 +219,11 @@ class ROSWorld(BaseWorld):
     def step(self):
         if self.robot is not None:
             data_point = self.csv.sequential_data[self.index]
+
+            t = data_point.timestamp
+
+            gt = self.get_closest_ground_truth(t)
+            self.ground_truths.append(gt)
 
             self.robot.localize(data_point)
             self.estimated_pose.append(self.robot.get_pose())
@@ -232,6 +246,25 @@ class ROSWorld(BaseWorld):
 
         self.world.plot(ground_truth[:, 0], ground_truth[:, 1])
         self.world.plot(esimtated[:, 0], esimtated[:, 1])
+
+    def get_closest_ground_truth(self, t):
+        gts = self.csv.sensor_data[DataType.GROUND_TRUTH]
+
+        while self.ground_truth_index >= 0 and t <= gts[self.ground_truth_index].timestamp:
+            self.ground_truth_index -= 1
+
+        while self.ground_truth_index < len(gts) - 1 and not (gts[self.ground_truth_index].timestamp <= t and t <= gts[
+            self.ground_truth_index + 1].timestamp):
+            self.ground_truth_index += 1
+
+        assert gts[self.ground_truth_index].timestamp <= t <= gts[self.ground_truth_index + 1].timestamp
+
+        o = self.interpolate_pose(gts[self.ground_truth_index].measurement_data[:3],
+                                  gts[self.ground_truth_index].timestamp,
+                                  gts[self.ground_truth_index + 1].measurement_data[:3],
+                                  gts[self.ground_truth_index + 1].timestamp, t)
+
+        return o
 
 
 class Robot(ABC):
