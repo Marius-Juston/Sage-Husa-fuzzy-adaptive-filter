@@ -526,9 +526,13 @@ def ukf_test_world():
 def ros_world():
     w = ROSWorld('out.csv')
 
-    init_pose = w.csv.sensor_data[DataType.GROUND_TRUTH][0].measurement_data
+    init_pose = w.csv.sensor_data[DataType.GROUND_TRUTH][0]
 
-    w.set_robot(UKFROSRobot(init_pose[:3]))
+    w.set_robot(
+        UKFROSRobot(init_pose.measurement_data[:3], init_pose.timestamp, t=init_pose.measurement_data[UKFState.YAW], P=
+        np.diag([0.0001, 0.0001, 0.0001, .0001, 0.0001, 0.0001])
+                    # None
+                    ))
 
     while not w.empty():
         print("Step:", w.index)
