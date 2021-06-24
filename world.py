@@ -358,6 +358,60 @@ class UKFRobot(Robot):
         return self.ukf.x[:UKFState.Z + 1], self.ukf.x[UKFState.YAW]
 
 
+class ROSRobot(ABC):
+
+    def __init__(self, pose, t) -> None:
+        super().__init__()
+        self.pose = pose
+        self.t = t
+
+    @abstractmethod
+    def localize(self, data):
+        pass
+
+    def get_pose(self):
+        return self.pose
+
+    def get_heading(self):
+        return self.t
+
+
+class UKFROSRobot(ROSRobot):
+    def __init__(self, init_pose=None, t=0, v=0, w=0, uwb_std=1.0001,
+                 odometry_std=(11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001), speed_noise_std=3.9001,
+                 yaw_rate_noise_std=4.9001, alpha=1, beta=0, k=None) -> None:
+        super().__init__(init_pose, t)
+        self.init_pose = init_pose
+
+        sensor_std = {
+            DataType.UWB: {
+                'std': [uwb_std],
+                'nz': 1
+            },
+            DataType.ODOMETRY: {
+                'std': odometry_std,
+                'nz': 6
+            }
+        }
+
+        self.sensor_pose = []
+
+        self.ukf = FusionUKF(sensor_std, speed_noise_std=speed_noise_std, yaw_rate_noise_std=yaw_rate_noise_std,
+                             alpha=alpha, beta=beta, k=k)
+        self.ukf.initialize(np.array([*self.init_pose, v, t, w]), np.identity(6) / 100, 0)
+
+        self.sensor = np.array([0, -.162, .184])
+
+    def localize(self, data):
+        if data.data_type == DataType.UWB:
+            self.ukf.update(data)
+
+            self.pose = self.ukf.x[:UKFState.Z + 1]
+            self.t = self.ukf.x[UKFState.YAW]
+
+        return self.pose, self.t
+
+
 def ukf_test_world():
     w = World(dt=.1, large_d_p=0.0)
     # w.add_robot(RandomRobot(v=1., w=.2))
