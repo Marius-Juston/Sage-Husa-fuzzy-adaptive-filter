@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
 
+from csv_reader import CSVReader
 from ukf.datapoint import DataType, DataPoint
 from ukf.fusion_ukf import FusionUKF
 from ukf.state import UKFState
@@ -20,7 +21,25 @@ def angle_diff(angle1, angle2):
     return diff
 
 
-class World:
+class BaseWorld(ABC):
+    @abstractmethod
+    def calculate_rsme(self, robot_id):
+        pass
+
+    @abstractmethod
+    def reset(self):
+        pass
+
+    @abstractmethod
+    def step(self):
+        pass
+
+    @abstractmethod
+    def plot(self, ranges=False, offset_sensor=False, large_errors=False):
+        pass
+
+
+class World(BaseWorld):
     def __init__(self, dt=1 / 60, d_std=.1, large_d_p=.075, large_d_std=2) -> None:
         super().__init__()
 
