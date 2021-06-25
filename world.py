@@ -201,6 +201,7 @@ class ROSWorld(BaseWorld):
         self.estimated_pose = []
         self.estimated_heading = []
         self.ground_truths = []
+        self.times = []
         self.ground_truth_index = 0
 
     def interpolate_pose(self, i_pose, i_t, f_pose, f_t, x_t):
@@ -231,6 +232,7 @@ class ROSWorld(BaseWorld):
             gt = self.get_closest_ground_truth(t)
             self.ground_truths.append(gt)
 
+            self.times.append(t)
             self.robot.localize(data_point)
             self.estimated_pose.append(self.robot.get_pose())
             self.estimated_heading.append(self.robot.get_heading())
@@ -247,6 +249,7 @@ class ROSWorld(BaseWorld):
         self.world.set_aspect('equal')
 
         ground_truth = np.array([i.measurement_data for i in self.csv.sensor_data[DataType.GROUND_TRUTH]])
+        ground_truth_time = np.array([i.timestamp for i in self.csv.sensor_data[DataType.GROUND_TRUTH]])
         esimtated = np.array(self.estimated_pose)
 
         if interpolation:
@@ -256,6 +259,8 @@ class ROSWorld(BaseWorld):
         self.world.plot(ground_truth[:, 0], ground_truth[:, 1])
         self.world.plot(esimtated[:, 0], esimtated[:, 1])
 
+        self.angles.plot(ground_truth_time, ground_truth[:, UKFState.YAW])
+        self.angles.plot(self.times, self.estimated_heading)
     def get_closest_ground_truth(self, t):
         gts = self.csv.sensor_data[DataType.GROUND_TRUTH]
 
