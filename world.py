@@ -597,7 +597,8 @@ def ros_world():
         pass
 
     rsme = w.calculate_rsme(0)
-    print("RSME", rsme, np.sum(rsme[:3]))
+    # print("RSME", rsme, np.sum(rsme[:3]))
+    print("RSME", rsme, np.sum(rsme))
 
     w.plot(ranges=False, offset_sensor=False, large_errors=True)
 
