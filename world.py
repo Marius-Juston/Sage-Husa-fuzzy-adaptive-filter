@@ -441,7 +441,7 @@ class ROSRobot(ABC):
 
 class UKFROSRobot(ROSRobot):
     def __init__(self, init_pose, inital_time, t=0, v=0, w=0, uwb_std=1.0001,
-                 odometry_std=(11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001), speed_noise_std=.0101,
+                 odometry_std=(11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001), imu_std=(0.01,), speed_noise_std=.0101,
                  yaw_rate_noise_std=.01001, alpha=1, beta=0, k=None, P=None) -> None:
         super().__init__(init_pose, t)
         self.init_pose = init_pose
@@ -454,6 +454,10 @@ class UKFROSRobot(ROSRobot):
             DataType.ODOMETRY: {
                 'std': odometry_std,
                 'nz': 6
+            },
+            DataType.IMU: {
+                'std': imu_std,
+                'nz': 1
             }
         }
 
@@ -560,10 +564,29 @@ def ros_world():
 
     init_pose = w.csv.sensor_data[DataType.GROUND_TRUTH][0]
 
+    # w.set_robot(
+    #     UKFROSRobot(init_pose.measurement_data[:3], init_pose.timestamp, t=init_pose.measurement_data[UKFState.YAW], P=
+    #     np.diag([0.0001, 0.0001, 0.0001, .0001, 0.0001, 0.0001])))
+
+    # 0.47603732478383814
+    x = [1.0001, .0101, .01001, 1, 0, -5, 0.0001, 0.0001, 0.0001, .0001, 0.0001, 0.0001]
+    # x = [0.3005500739580095, 1.7456795243473833, 1.2537087820968702, 0.9756936851785581, 0.12282062791567361, -2.685579681516146, 1.7811686059759613, 8.135101518427398, 0.0001, 0.0001, 9.679152133012991, 6.493196017200628]
+    # x = [.1005500739580095, 0.27456795243473833, 0.537087820968702, 0.9756936851785581, 0.12282062791567361, -2.685579681516146, 1.7811686059759613, 8.135101518427398, 0.0001, 0.0001, 9.679152133012991, 6.493196017200628]
+    # x = [0.5356205657134541, 0.18109875383894544, 0.3323663017573703, 0.001, 2.0, -4.899251280615886, 2.3463439365430467, 0.0001, 0.0001, 2.8112198335402963, 0.0001, 9.20133215026015]
+    x = [3.0, 0.688804761738878, 2.4316845626457964, 3.0, -0.9976005928055613, 0.0, 10.0, 7.474000642513913,
+         16.74751457478579, 3.986383868394205, 0.9981002081983105, 10.0, 0.01, 0.01, 0.8348157603174587,
+         3.1186254198285264, 2.8082493403438566, 1.0723748068270464, .01]
     w.set_robot(
-        UKFROSRobot(init_pose.measurement_data[:3], init_pose.timestamp, t=init_pose.measurement_data[UKFState.YAW], P=
-        np.diag([0.0001, 0.0001, 0.0001, .0001, 0.0001, 0.0001])
-                    # None
+        UKFROSRobot(init_pose.measurement_data[:3], init_pose.timestamp, t=init_pose.measurement_data[UKFState.YAW],
+                    uwb_std=x[0],
+                    speed_noise_std=x[1],
+                    yaw_rate_noise_std=x[2],
+                    alpha=x[3],
+                    beta=x[4],
+                    k=x[5],
+                    P=np.diag([x[6], x[7], x[8], x[9], x[10], x[11]]),
+                    odometry_std=x[12:18],
+                    imu_std=(x[18],)
                     ))
 
     try:
