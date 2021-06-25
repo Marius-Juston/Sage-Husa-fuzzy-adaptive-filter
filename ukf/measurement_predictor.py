@@ -3,7 +3,7 @@ import numpy as np
 
 from ukf.datapoint import DataType
 from ukf.state import UKFState
-from ukf.util import normalize, angle_diff
+from ukf.util import angle_diff
 
 
 class MeasurementPredictor(object):
