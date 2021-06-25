@@ -3,7 +3,7 @@ import numpy as np
 
 from ukf.datapoint import DataType
 from ukf.state import UKFState
-from ukf.util import normalize
+from ukf.util import normalize, angle_diff
 
 
 class MeasurementPredictor(object):
@@ -25,6 +25,8 @@ class MeasurementPredictor(object):
         self.nz = None
         self.anchor_pos = None
         self.sensor_offset = None
+
+        self.data = []
 
     def initialize(self, data):
         sensor_type = data.data_type
@@ -69,6 +71,7 @@ class MeasurementPredictor(object):
 
                 sensor_pose = sensor_pose + offsets
 
+            self.data.append(sensor_pose[:2, :])
 
             distances = np.linalg.norm(sensor_pose - self.anchor_pos.reshape((-1, 1)), axis=0)
             sigma[0] = distances
@@ -89,7 +92,7 @@ class MeasurementPredictor(object):
         sub = np.subtract(sigma.T, z).T
 
         if self.current_type == DataType.ODOMETRY:
-            normalize(sub, UKFState.YAW)
+            sub[UKFState.YAW] = angle_diff(sigma[UKFState.YAW], z[UKFState.YAW])
 
         return (np.matmul(self.WEIGHTS_C * sub, sub.T)) + self.R
 
