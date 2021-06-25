@@ -7,8 +7,9 @@ from ukf.datapoint import DataType, DataPoint
 
 class CSVReader:
 
-    def __init__(self, csv_file) -> None:
+    def __init__(self, csv_file, use_ground_truth=False) -> None:
         super().__init__()
+        self.use_ground_truth = use_ground_truth
         self.processor = {
             DataType.UWB: self.process_uwb,
             DataType.IMU: self.process_imu,
@@ -35,12 +36,14 @@ class CSVReader:
 
                 processed = self.processor[id](t, line_data[2:])
 
-                if id != DataType.GROUND_TRUTH:
+                if self.use_ground_truth or id != DataType.GROUND_TRUTH:
                     self.sequential_data.append(processed)
 
                 self.sensor_data[id].append(processed)
 
     def process_imu(self, t, line_data):
+        # DataType.IMU, t, orien.x, orien.y, orien.z, orien.w, ang_vel.x, ang_vel.y, ang_vel.z, lin_acc.x,
+        # lin_acc.y, lin_acc.z
         data = DataPoint(DataType.IMU, np.asarray(tuple(map(float, line_data))), t)
 
         return data
