@@ -9,6 +9,7 @@ from csv_reader import CSVReader
 from ukf.datapoint import DataType, DataPoint
 from ukf.fusion_ukf import FusionUKF
 from ukf.state import UKFState
+from util import euler_from_quaternion
 
 np.random.seed(421)
 
@@ -465,8 +466,20 @@ class UKFROSRobot(ROSRobot):
                              alpha=alpha, beta=beta, k=k)
         self.ukf.initialize(np.array([*self.init_pose, v, t, w]), P, inital_time)
 
-    def localize(self, data):
-        if data.data_type == DataType.UWB:
+    def localize(self, data: DataPoint):
+        # if data.data_type == DataType.UWB:
+        # print(data.timestamp)
+
+        if data.data_type == DataType.ODOMETRY:
+            data.measurement_data = data.measurement_data[:6]
+        elif data.data_type == DataType.IMU:
+            yaw = euler_from_quaternion(data.measurement_data[:4])[2]
+            a.append([data.timestamp,yaw])
+
+            data.measurement_data = np.array([yaw])
+
+        # if data.data_type != DataType.IMU:
+        if True:
             self.ukf.update(data)
         else:
             self.ukf.predict(data)
