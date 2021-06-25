@@ -184,11 +184,17 @@ class World(BaseWorld):
 
 
 class ROSWorld(BaseWorld):
+    cache = None
+
     def __init__(self, csv_file) -> None:
         super().__init__()
 
-        self.csv = CSVReader(csv_file)
-        self.csv.process()
+        if ROSWorld.cache is None:
+            self.csv = CSVReader(csv_file, use_ground_truth=True)
+            self.csv.process()
+            ROSWorld.cache = self.csv
+        else:
+            self.csv = ROSWorld.cache
         self.index = 0
 
         self.robot = None
