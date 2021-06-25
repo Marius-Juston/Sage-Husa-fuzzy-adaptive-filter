@@ -82,6 +82,8 @@ class MeasurementPredictor(object):
             sigma[UKFState.V] = sigma_x[UKFState.V]  # v
             sigma[UKFState.YAW] = sigma_x[UKFState.YAW]  # theta
             sigma[UKFState.YAW_RATE] = sigma_x[UKFState.YAW_RATE]  # theta_yaw
+        elif self.current_type == DataType.IMU:
+            sigma[0] = sigma_x[UKFState.YAW]  # theta
 
         return sigma
 
@@ -93,6 +95,8 @@ class MeasurementPredictor(object):
 
         if self.current_type == DataType.ODOMETRY:
             sub[UKFState.YAW] = angle_diff(sigma[UKFState.YAW], z[UKFState.YAW])
+        elif self.current_type == DataType.IMU:
+            sub = angle_diff(sigma, z)
 
         return (np.matmul(self.WEIGHTS_C * sub, sub.T)) + self.R
 
