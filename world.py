@@ -6,10 +6,9 @@ import numpy as np
 from matplotlib.figure import Figure
 
 from csv_reader import CSVReader
-from ukf.datapoint import DataType, DataPoint
-from ukf.fusion_ukf import FusionUKF
+from robot import UKFRobot, UKFROSRobot
+from ukf.datapoint import DataType
 from ukf.state import UKFState
-from util import euler_from_quaternion
 
 np.random.seed(421)
 
