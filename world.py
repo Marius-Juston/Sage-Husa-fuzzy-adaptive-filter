@@ -214,9 +214,18 @@ class ROSWorld(BaseWorld):
         self.robot = robot
 
     def calculate_rsme(self, robot_id):
-        rsme = np.mean((np.array(self.estimated_pose) - np.array(self.ground_truths)) ** 2, axis=0)
+        # return np.sum(np.linalg.norm(np.array(self.estimated_pose) - np.array(self.ground_truths), axis=1))
+        # np.linalg.norm(np.array(self.estimated_pose) - np.array(self.ground_truths), axis=1)
+
+        estimated_pose = np.array(self.estimated_pose)
+        ground_truths = np.array(self.ground_truths)
+
+        rsme = np.mean((estimated_pose - ground_truths) ** 2, axis=0)
+
+        rsme[UKFState.YAW] = np.mean(angle_diff(estimated_pose[:, UKFState.YAW], ground_truths[:, UKFState.YAW]) ** 2)
 
         return np.sqrt(rsme)
+        # return rsme
 
     def reset(self):
         pass
