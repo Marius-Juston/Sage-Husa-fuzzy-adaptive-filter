@@ -253,8 +253,8 @@ class ROSWorld(BaseWorld):
 
         self.index += 1
 
-    def plot(self, ranges=False, offset_sensor=False, large_errors=False, interpolation=False):
-        f: Figure = plt.figure(0)
+    def plot(self, ranges=False, offset_sensor=False, large_errors=False, interpolation=False, element_plots=True):
+        f: Figure = plt.figure()
 
         if ranges:
             self.world, self.ranges, self.angles = f.subplots(ncols=3)
@@ -280,15 +280,17 @@ class ROSWorld(BaseWorld):
 
         # plt.show()
 
-        x = ['x', 'y', 'z', 'v', '$\psi$', '$\dot{\psi}$']
+        if element_plots:
+            x = ['x', 'y', 'z', 'v', '$\psi$', '$\dot{\psi}$']
 
-        for i in range(esimtated.shape[-1]):
-            fig: Figure = plt.figure(i + 1)
-            fig.suptitle(x[i])
-            a = fig.gca()
-            a.plot(self.times, esimtated[:, i], label='Estimated')
-            a.plot(ground_truth_time, ground_truth[:, i], label='Actual')
-            a.legend()
+            for i in range(esimtated.shape[-1]):
+                fig: Figure = plt.figure()
+                fig.suptitle(x[i])
+                a = fig.gca()
+                a.plot(self.times, esimtated[:, i], label='Estimated')
+                a.plot(ground_truth_time, ground_truth[:, i], label='Actual')
+                a.legend()
+
         plt.show()
 
     def get_closest_ground_truth(self, t):
