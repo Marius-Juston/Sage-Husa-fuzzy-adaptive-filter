@@ -301,8 +301,6 @@ class ROSWorld(BaseWorld):
             self.ground_truth_index + 1].timestamp):
             self.ground_truth_index += 1
 
-        assert gts[self.ground_truth_index].timestamp <= t <= gts[self.ground_truth_index + 1].timestamp
-
         o = self.interpolate_pose(gts[self.ground_truth_index].measurement_data[:6],
                                   gts[self.ground_truth_index].timestamp,
                                   gts[self.ground_truth_index + 1].measurement_data[:6],
