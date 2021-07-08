@@ -205,6 +205,9 @@ class ROSWorld(BaseWorld):
         self.times = []
         self.ground_truth_index = 0
 
+        self.estimated_state = []
+        self.ground_truths = []
+
     def interpolate_pose(self, i_pose, i_t, f_pose, f_t, x_t):
         o = i_pose + (x_t - i_t) * (f_pose - i_pose) / (f_t - i_t)
 
