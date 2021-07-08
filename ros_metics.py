@@ -68,9 +68,7 @@ class ROSMetrics:
 
         rmse = self.calculate_rsme(estimated, actual)
         rmse_pos = self.calculate_rsme_pose(estimated, actual)
-        print(rmse_pos)
         mae_pos = self.calculate_mae_pose(estimated, actual)
-        print(mae_pos)
         mae = self.calculate_mae(estimated, actual)
 
         x = ['x', 'y', 'z', 'v', '$\psi$', '$\dot{\psi}$']
@@ -89,13 +87,20 @@ class ROSMetrics:
         t = np.arange(0, len(estimated))
 
         for i in range(estimated.shape[-1]):
-            fig: Figure = plt.figure(i)
-            print(x2[i])
+            fig: Figure = plt.figure()
             fig.suptitle(x2[i])
             a = fig.gca()
             a.plot(t, estimated[:, i], label='Estimated')
             a.plot(t, actual[:, i], label='Actual')
             a.legend()
+
+        fig = plt.figure()
+        a = fig.gca()
+        a.set_aspect('equal')
+        a.plot(estimated[:, 0], estimated[:, 1], label="Estimated")
+        a.plot(actual[:, 0], actual[:, 1], label="Actual")
+        a.legend()
+
         plt.show()
 
         return rmse
