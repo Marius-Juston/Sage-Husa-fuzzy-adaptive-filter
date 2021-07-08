@@ -423,6 +423,48 @@ def ros_world():
     plt.show()
 
 
+def ros_world2():
+    w = ROSWorld('data/out2.csv')
+
+    init_pose = w.csv.sensor_data[DataType.GROUND_TRUTH][0]
+
+    # 0.47603732478383814
+    x = [1.0001, 3.9001, 4.9001, 1, 0, None, 0.0001, 0.0001, 0.0001,
+         2.0001, 0.0001, 0.0001, 11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001, 1]
+
+    w.set_robot(
+        UKFROSRobot(init_pose.measurement_data[:3], init_pose.timestamp, t=init_pose.measurement_data[UKFState.YAW],
+                    uwb_std=x[0],
+                    speed_noise_std=x[1],
+                    yaw_rate_noise_std=x[2],
+                    alpha=x[3],
+                    beta=x[4],
+                    k=x[5],
+                    P=np.diag([x[6], x[7], x[8], x[9], x[10], x[11]]),
+                    odometry_std=x[12:18],
+                    imu_std=(x[18],),
+                    sensor_used=[DataType.UWB, DataType.ODOMETRY]
+                    ))
+
+    try:
+        i = 0
+        while not w.empty():
+            print("Step:", w.index)
+            w.step()
+            print(np.degrees(w.robot.t))
+            i += 1
+    except np.linalg.LinAlgError:
+        print("Error")
+
+    print("Finished")
+    rsme = w.calculate_rsme(0)
+    print("RSME", rsme, np.sum(rsme))
+
+    w.plot(ranges=False, offset_sensor=False, large_errors=True)
+
+    plt.show()
+
+
 if __name__ == '__main__':
     # ukf_test_world()
     ros_world()
