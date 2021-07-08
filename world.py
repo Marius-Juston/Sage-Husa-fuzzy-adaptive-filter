@@ -252,7 +252,7 @@ class ROSWorld(BaseWorld):
         self.index += 1
 
     def plot(self, ranges=False, offset_sensor=False, large_errors=False, interpolation=False):
-        f: Figure = plt.gcf()
+        f: Figure = plt.figure(0)
 
         if ranges:
             self.world, self.ranges, self.angles = f.subplots(ncols=3)
@@ -272,7 +272,23 @@ class ROSWorld(BaseWorld):
         self.world.plot(esimtated[:, 0], esimtated[:, 1])
 
         self.angles.plot(ground_truth_time, ground_truth[:, UKFState.YAW])
-        self.angles.plot(self.times, self.estimated_heading)
+        self.angles.plot(self.times, self.estimated_heading, c='b', zorder=-1, linewidth=2.5)
+        # s = np.array(a)
+        # self.angles.plot(s[:, 0], s[:, 1])
+
+        # plt.show()
+
+        x = ['x', 'y', 'z', 'v', '$\psi$', '$\dot{\psi}$']
+
+        for i in range(esimtated.shape[-1]):
+            fig: Figure = plt.figure(i + 1)
+            fig.suptitle(x[i])
+            a = fig.gca()
+            a.plot(self.times, esimtated[:, i], label='Estimated')
+            a.plot(ground_truth_time, ground_truth[:, i], label='Actual')
+            a.legend()
+        plt.show()
+
     def get_closest_ground_truth(self, t):
         gts = self.csv.sensor_data[DataType.GROUND_TRUTH]
 
