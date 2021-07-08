@@ -268,7 +268,7 @@ class ROSWorld(BaseWorld):
         while self.ground_truth_index >= 0 and t <= gts[self.ground_truth_index].timestamp:
             self.ground_truth_index -= 1
 
-        while self.ground_truth_index < len(gts) - 1 and not (gts[self.ground_truth_index].timestamp <= t and t <= gts[
+        while self.ground_truth_index < len(gts) - 2 and not (gts[self.ground_truth_index].timestamp <= t and t <= gts[
             self.ground_truth_index + 1].timestamp):
             self.ground_truth_index += 1
 
