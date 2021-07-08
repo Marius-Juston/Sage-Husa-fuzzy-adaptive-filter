@@ -373,6 +373,7 @@ def ukf_test_world():
 
 
 def ros_world():
+    w = ROSWorld('data/out.csv')
 
     init_pose = w.csv.sensor_data[DataType.GROUND_TRUTH][0]
 
@@ -408,11 +409,14 @@ def ros_world():
                     ))
 
     try:
+        i = 0
         while not w.empty():
             print("Step:", w.index)
             w.step()
+            print(np.degrees(w.robot.t))
+            i += 1
     except np.linalg.LinAlgError:
-        pass
+        print("Error")
 
     rsme = w.calculate_rsme(0)
     # print("RSME", rsme, np.sum(rsme[:3]))
