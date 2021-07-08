@@ -235,8 +235,10 @@ class ROSWorld(BaseWorld):
 
             self.times.append(t)
             self.robot.localize(data_point)
-            self.estimated_pose.append(self.robot.get_pose())
+            # self.estimated_pose.append(self.robot.get_pose())
             self.estimated_heading.append(self.robot.get_heading())
+
+            self.estimated_pose.append(self.robot.ukf.x)
 
         self.index += 1
 
@@ -274,9 +276,9 @@ class ROSWorld(BaseWorld):
 
         assert gts[self.ground_truth_index].timestamp <= t <= gts[self.ground_truth_index + 1].timestamp
 
-        o = self.interpolate_pose(gts[self.ground_truth_index].measurement_data[:3],
+        o = self.interpolate_pose(gts[self.ground_truth_index].measurement_data[:6],
                                   gts[self.ground_truth_index].timestamp,
-                                  gts[self.ground_truth_index + 1].measurement_data[:3],
+                                  gts[self.ground_truth_index + 1].measurement_data[:6],
                                   gts[self.ground_truth_index + 1].timestamp, t)
 
         return o
