@@ -7,7 +7,7 @@ def normalize(d, index):
 
 
 def angle_diff(angle1, angle2):
-    diff = (angle2 - angle1 + np.pi) % (2 * np.pi) - np.pi
+    diff = (angle1 - angle2 + np.pi) % (2 * np.pi) - np.pi
 
     diff[diff < -np.pi] += 2 * np.pi
 

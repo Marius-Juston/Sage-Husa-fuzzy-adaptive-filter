@@ -216,18 +216,35 @@ class ROSWorld(BaseWorld):
         self.robot = robot
 
     def calculate_rsme(self, robot_id):
-        # return np.sum(np.linalg.norm(np.array(self.estimated_pose) - np.array(self.ground_truths), axis=1))
+        return np.mean(
+            np.linalg.norm(np.array(self.estimated_pose)[:, :3] - np.array(self.ground_truths)[:, :3], axis=1))
         # np.linalg.norm(np.array(self.estimated_pose) - np.array(self.ground_truths), axis=1)
 
         estimated_pose = np.array(self.estimated_pose)
         ground_truths = np.array(self.ground_truths)
 
-        rsme = np.mean((estimated_pose - ground_truths) ** 2, axis=0)
+        sub = estimated_pose - ground_truths
+        mean = np.mean(sub, axis=0)
+        min_ = ground_truths.min(axis=0)
+        max_ = ground_truths.max(axis=0)
 
-        rsme[UKFState.YAW] = np.mean(angle_diff(estimated_pose[:, UKFState.YAW], ground_truths[:, UKFState.YAW]) ** 2)
+        sub[:,UKFState.YAW] = angle_diff(estimated_pose[:, UKFState.YAW], ground_truths[:, UKFState.YAW])
 
-        return np.sqrt(rsme)
+        rsme = np.mean((sub) ** 2, axis=0)
+
+        # sub = np.abs(estimated_pose - ground_truths)
+        # sub[UKFState.YAW] = np.abs(estimated_pose[:, UKFState.YAW], ground_truths[:, UKFState.YAW])
+
+        rsme = np.sqrt(rsme)
+
+
+        nrmse = np.abs(rsme) / np.abs(mean)
+
+        print("[" + ",".join(map(str, rsme)) + ']')
+        print("[" + ",".join(map(str, nrmse)) + ']')
         # return rsme
+        return nrmse
+        # return sub
 
     def reset(self):
         pass
@@ -272,6 +289,11 @@ class ROSWorld(BaseWorld):
 
         self.world.plot(ground_truth[:, 0], ground_truth[:, 1])
         self.world.plot(esimtated[:, 0], esimtated[:, 1])
+
+        # odom = np.array([i.measurement_data for i in self.csv.sensor_data[DataType.ODOMETRY]])
+        # self.world.plot(odom[:, 0], odom[:, 1])
+        self.robot.aa = np.array(self.robot.aa)
+        self.world.plot(self.robot.aa[:, 0], self.robot.aa[:, 1])
 
         self.angles.plot(ground_truth_time, ground_truth[:, UKFState.YAW])
         self.angles.plot(self.times, self.estimated_heading, c='b', zorder=-1, linewidth=2.5)
@@ -434,9 +456,22 @@ def ros_world2():
 
     init_pose = w.csv.sensor_data[DataType.GROUND_TRUTH][0]
 
-    # 0.47603732478383814
-    x = [1.0001, 3.9001, 4.9001, 1, 0, None, 0.0001, 0.0001, 0.0001,
-         2.0001, 0.0001, 0.0001, 11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001, 1]
+    # 4.863677449166163
+    # x = [1.0001, 3.9001, 4.9001, 1, 0, None, 0.0001, 0.0001, 0.0001,
+    #      2.0001, 0.0001, 0.0001, 11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001, 1]
+
+    x = [1, 1, 1, 1, 0, None, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    x = [2.659499784397555, 1.0831178839141666, 2.1359515250278855, 0.8919490628763381, -1.8636939535841257,
+         -5.016355891607367, 3.493890077753967, 2.8665647051912844, 0.0001, 1.36670195424429, 1.1333357613675807,
+         0.0001, 0.34671604921321414, 1.640808677965142, 2.0324656526567084, 5.0, 0.6639031999283294, 5.0,
+         0.9609048716515619]
+
+    #
+    # x = [2.825966362705224, 1.9316060804766901, 0.03264254802240296, 2.698241689740617, 1.9911215771524704,
+    #      -4.771320278302439, 3.197382259643369, 10.0, 9.141328450229278, 1.83098378534384, 10.0, 10.0,
+    #      0.34521128571916754, 16.05322885480677, 0.06593248652230164, 1.2495450013865828, 0.3282816961808588,
+    #      2.9894966141249806, 1.4103946098233913]
 
     w.set_robot(
         UKFROSRobot(init_pose.measurement_data[:3], init_pose.timestamp, t=init_pose.measurement_data[UKFState.YAW],
@@ -449,7 +484,7 @@ def ros_world2():
                     P=np.diag([x[6], x[7], x[8], x[9], x[10], x[11]]),
                     odometry_std=x[12:18],
                     imu_std=(x[18],),
-                    sensor_used=[DataType.UWB, DataType.ODOMETRY]
+                    sensor_used=[DataType.ODOMETRY, DataType.UWB]
                     ))
 
     try:
@@ -473,4 +508,6 @@ def ros_world2():
 
 if __name__ == '__main__':
     # ukf_test_world()
-    ros_world()
+    # ros_world()
+    ros_world2()
+    # ros_world2()

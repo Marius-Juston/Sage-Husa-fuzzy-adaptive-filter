@@ -96,8 +96,10 @@ class FusionUKF(object):
         dt = (data.timestamp - self.timestamp) / 1e9  # seconds
         # dt = (data.timestamp - self.timestamp)  # seconds
 
-        if dt < 0.0001:
-            dt = 0.0001
+        if dt < 0:
+            print("Error went back in time")
+        elif dt > 1:
+            print("Dt between time periods is way too large")
 
         # STATE PREDICTION
         # get predicted state and covariance of predicted state, predicted sigma points in state space

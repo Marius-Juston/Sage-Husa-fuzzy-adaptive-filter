@@ -92,6 +92,9 @@ class ROSMetrics:
             a = fig.gca()
             a.plot(t, estimated[:, i], label='Estimated')
             a.plot(t, actual[:, i], label='Actual')
+
+            a.set_xlabel('Time step (50 hz)')
+            a.set_ylabel(f"{x2[i]}-coordinate (m)")
             a.legend()
 
         fig = plt.figure()

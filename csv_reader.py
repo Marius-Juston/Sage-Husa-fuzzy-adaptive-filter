@@ -13,8 +13,8 @@ class CSVReader:
         self.processor = {
             DataType.UWB: self.process_uwb,
             DataType.IMU: self.process_imu,
-            DataType.GROUND_TRUTH: self.process_odom,
-            DataType.ODOMETRY: self.process_odom
+            DataType.GROUND_TRUTH: self.create_odom_process(DataType.GROUND_TRUTH),
+            DataType.ODOMETRY: self.create_odom_process(DataType.ODOMETRY)
         }
 
         self.csv_file = csv_file
@@ -65,18 +65,20 @@ class CSVReader:
 
         return data
 
-    def process_odom(self, t, line_data):
-        # id, t, px, py, pz, v, theta, theta_yaw, msg.pose.pose.orientation.x,
-        # msg.pose.pose.orientation.y,
-        # msg.pose.pose.orientation.z,
-        # msg.pose.pose.orientation.w
-        data = DataPoint(DataType.ODOMETRY, np.array(tuple(map(float, line_data))), t)
+    def create_odom_process(self, id):
+        def process_odom(t, line_data):
+            # id, t, px, py, pz, v, theta, theta_yaw, msg.pose.pose.orientation.x,
+            # msg.pose.pose.orientation.y,
+            # msg.pose.pose.orientation.z,
+            # msg.pose.pose.orientation.w
+            data = DataPoint(id, np.array(tuple(map(float, line_data))), t)
 
-        return data
+            return data
+        return process_odom
 
 
 if __name__ == '__main__':
-    reader = CSVReader('out.csv')
+    reader = CSVReader('data/out.csv')
     print("Processing")
     reader.process()
     print("Done")

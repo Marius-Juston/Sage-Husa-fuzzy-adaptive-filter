@@ -15,7 +15,7 @@ from world import UKFRobot, World, ROSWorld, UKFROSRobot
 
 np.random.seed(42)
 
-from skopt import gp_minimize
+from skopt import gp_minimize, gbrt_minimize
 
 
 def run_UKF(x):
@@ -74,7 +74,7 @@ def run_UKF(x):
 
 
 def run(world, minimizer, bounds, x0=None, n_calls=60, n=42):
-    return minimizer(world, bounds, n_calls=n_calls, random_state=n, x0=x0, n_jobs=6, initial_point_generator='lhs')
+    return minimizer(world, bounds, n_calls=n_calls, random_state=n, x0=x0, n_jobs=6, initial_point_generator='lhs', verbose=True)
 
 
 def ukf_optimizer():
@@ -153,7 +153,7 @@ def run_UKF_ROS(x):
 
 def create_UKF_ROS(data_file='data/out2.csv'):
     def run_custom_UKF_ROS(x):
-        err = 8
+        err = 1.5
 
         if x[3] ** 2 * (6 + x[5]) + 2 <= 0:
             print("Failure")
@@ -174,7 +174,7 @@ def create_UKF_ROS(data_file='data/out2.csv'):
                         P=np.diag([x[6], x[7], x[8], x[9], x[10], x[11]]),
                         odometry_std=x[12:18],
                         imu_std=(x[18],),
-                        sensor_used=[DataType.UWB, DataType.ODOMETRY]
+                        sensor_used=[DataType.ODOMETRY]
                         )
         )
 
@@ -267,17 +267,27 @@ def ukf_ros_optimizer2():
     # k = x[5],
     # P = np.diag([x[6], x[7], x[8], x[9], x[10], x[11]])
     # imu = x[18]
-    bounds = [(0.005, 3), (0.005, 6), (0.005, 6), (0.001, 3.), (-2., 2.), (-7., 0),
-              (0.0001, 10), (0.0001, 10), (0.0001, 10), (0.0001, 10), (0.0001, 10), (0.0001, 10),
-              (0.01, 20), (0.01, 20), (0.01, 30), (0.01, 5), (0.0001, 3), (0.0001, 3),
-              (0.001, 3)]
+    bounds = [(0.005, 6), (0.005, 6), (0.005, 6), (0.001, 3.), (-2., 2.), (-7., 0),
+              (0.0001, 5), (0.0001, 5), (0.0001, 5), (0.0001, 5), (0.0001, 5), (0.0001, 5),
+              (0.01, 5), (0.01, 5), (0.01, 5), (0.01, 5), (0.0001, 5), (0.0001,5 ),
+              (0.001, 5)]
 
     # 4.863677449166163
     x0 = [1.0001, 3.9001, 4.9001, 1, 0, -5, 0.0001, 0.0001, 0.0001,
           2.0001, 0.0001, 0.0001, 11.0, 14.0001, 20.9001, 1.0001, 0.0001, 0.0001, 1]
+    # 1.0233502515039579
+    x0 = [1., 1., 1., 1., 0., -5, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    #
+    x0 = [2.659499784397555, 1.0831178839141666, 2.1359515250278855, 0.8919490628763381, -1.8636939535841257, -5.016355891607367, 3.493890077753967, 2.8665647051912844, 0.0001, 1.36670195424429, 1.1333357613675807, 0.0001, 0.34671604921321414, 1.640808677965142, 2.0324656526567084, 5.0, 0.6639031999283294, 5.0, 0.9609048716515619]
+    # x0 = [2.825966362705224, 1.9316060804766901, 0.03264254802240296, 2.698241689740617, 1.9911215771524704,
+    #       -4.771320278302439, 3.197382259643369, 10.0, 9.141328450229278, 1.83098378534384, 10.0, 10.0,
+    #       0.34521128571916754, 16.05322885480677, 0.06593248652230164, 1.2495450013865828, 0.3282816961808588,
+    #       2.9894966141249806, 1.4103946098233913]
 
     # gp_res = run(gp_minimize, bounds, x0, n=None, n_calls=200)
     gp_res = run(create_UKF_ROS('data/out2.csv'), gp_minimize, bounds, x0, n=42, n_calls=200)
+    # gp_res = run(create_UKF_ROS('data/out2.csv'), gbrt_minimize, bounds, x0, n=42, n_calls=60)
     # gp_res = run(run_UKF_ROS, gbrt_minimize, bounds, x0, n=42, n_calls=100)
 
     print(gp_res)

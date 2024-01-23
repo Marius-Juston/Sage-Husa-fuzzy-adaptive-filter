@@ -202,9 +202,19 @@ class UKFROSRobot(ROSRobot):
                              alpha=alpha, beta=beta, k=k)
         self.ukf.initialize(np.array([*self.init_pose, v, t, w]), P, inital_time)
 
+        self.aa = []
+
     def localize(self, data: DataPoint):
         if data.data_type == DataType.ODOMETRY:
+            # d = np.copy(data.measurement_data[:6])
+            # d[:2] = d[:2] + self.init_pose[:2]
+            # self.aa.append(d)
+            # # d = data
+            # d.measurement_data = np.copy(d.measurement_data)[:6]
+            self.aa.append(data.measurement_data[:2] + self.init_pose[:2])
+            data = DataPoint(DataType.ODOMETRY, np.copy(data.measurement_data), data.timestamp, data.extra)
             data.measurement_data = data.measurement_data[:6]
+            data.measurement_data[:2] += self.init_pose[:2]
         elif data.data_type == DataType.IMU and data.measurement_data.size > 1:
             yaw = euler_from_quaternion(data.measurement_data[:4])[2]
 
