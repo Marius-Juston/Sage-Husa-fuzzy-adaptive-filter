@@ -74,7 +74,7 @@ def run_UKF(x):
 
 
 def run(world, minimizer, bounds, x0=None, n_calls=60, n=42):
-    return minimizer(world, bounds, n_calls=n_calls, random_state=n, x0=x0, n_jobs=6, initial_point_generator='lhs', verbose=True)
+    return minimizer(world, bounds, n_calls=n_calls, random_state=n, x0=x0, n_jobs=20, initial_point_generator='lhs', verbose=True)
 
 
 def ukf_optimizer():
@@ -151,8 +151,8 @@ def run_UKF_ROS(x):
     return np.sum(rsme)
 
 
-def create_UKF_ROS(data_file='data/out2.csv'):
-    def run_custom_UKF_ROS(x):
+def create_UKF_ROS(data_file='data/out2.csv', plot=False):
+    def run_custom_UKF_ROS(x, plot=plot):
         err = 1.5
 
         if x[3] ** 2 * (6 + x[5]) + 2 <= 0:
@@ -174,7 +174,7 @@ def create_UKF_ROS(data_file='data/out2.csv'):
                         P=np.diag([x[6], x[7], x[8], x[9], x[10], x[11]]),
                         odometry_std=x[12:18],
                         imu_std=(x[18],),
-                        sensor_used=[DataType.ODOMETRY]
+                        # sensor_used=[DataType.ODOMETRY]
                         )
         )
 
@@ -183,6 +183,9 @@ def create_UKF_ROS(data_file='data/out2.csv'):
                 w.step()
         except np.linalg.LinAlgError:
             return err
+
+        if plot:
+            w.plot()
 
         rsme = w.calculate_rsme(0)
 
@@ -308,10 +311,56 @@ def ukf_ros_optimizer2():
 
     plt.show()
 
+def ukf_ros_optimizer3():
+    start = time()
+
+    # uwb_std = x[0],
+    # speed_noise_std = x[1],
+    # yaw_rate_noise_std = x[2],
+    # alpha = x[3],
+    # beta = x[4],
+    # k = x[5],
+    # P = np.diag([x[6], x[7], x[8], x[9], x[10], x[11]])
+    # imu = x[18]
+    bounds = [(0.005, 6), (0.005, 6), (0.005, 6), (0.001, 3.), (-2., 2.), (-7., 0),
+              (0.0001, 5), (0.0001, 5), (0.0001, 5), (0.0001, 5), (0.0001, 5), (0.0001, 5),
+              (0.01, 5), (0.01, 5), (0.01, 5), (0.01, 5), (0.0001, 5), (0.0001,5 ),
+              (0.001, 5)]
+
+    x0 = [2.659499784397555, 1.0831178839141666, 2.1359515250278855, 0.8919490628763381, -1.8636939535841257, -5.016355891607367, 3.493890077753967, 2.8665647051912844, 0.0001, 1.36670195424429, 1.1333357613675807, 0.0001, 0.34671604921321414, 1.640808677965142, 2.0324656526567084, 5.0, 0.6639031999283294, 5.0, 0.9609048716515619]
+    x0 = [6.0, 2.533101067702734, 2.415959286874128, 0.2661715221275878, 0.5665457615654477, -5.550914177849361, 0.6256636346811915, 3.3333308521420166, 3.3179852572472988, 0.0001, 0.4345337428241794, 0.7550338410102531, 0.01, 0.01, 0.036182385874357806, 0.08532954911231647, 4.172498592187061, 5.0, 2.7881495217747605]
+
+    print("Initial Run")
+    create_UKF_ROS('temp/out1.csv', plot=True)(x0)
+
+    # gp_res = run(gp_minimize, bounds, x0, n=None, n_calls=200)
+    gp_res = run(create_UKF_ROS('temp/out1.csv'), gp_minimize, bounds, x0, n=42, n_calls=200)
+    # gp_res = run(create_UKF_ROS('data/out2.csv'), gbrt_minimize, bounds, x0, n=42, n_calls=60)
+    # gp_res = run(run_UKF_ROS, gbrt_minimize, bounds, x0, n=42, n_calls=100)
+
+    print(gp_res)
+
+    print("Time 1", time() - start)
+
+    start = time()
+
+    plot = plot_convergence(("gp_minimize", gp_res), yscale="log")
+    print("Time 2", time() - start)
+
+    plt.plot()
+
+    start = time()
+    plot_objective(gp_res, n_points=10, minimum='expected_minimum')
+
+    print("Time 3", time() - start)
+
+    plt.show()
+
 
 if __name__ == '__main__':
     # ukf_optimizer()
     # ukf_ros_optimizer()
-    ukf_ros_optimizer2()
+    # ukf_ros_optimizer2()
+    ukf_ros_optimizer3()
 # conda install scikit-learn-intelex
 # python -m sklearnex my_application.py

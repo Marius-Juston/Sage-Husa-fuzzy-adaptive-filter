@@ -16,7 +16,7 @@ class ROSMetrics:
         self.ground_truth_index = 0
 
     def interpolate_pose(self, i_pose, i_t, f_pose, f_t, x_t):
-        o = i_pose + (x_t - i_t) * (f_pose - i_pose) / (f_t - i_t)
+        o = i_pose + (x_t - i_t) * (f_pose - i_pose) / (f_t - i_t + 1e-6)
 
         return o
 
@@ -50,7 +50,7 @@ class ROSMetrics:
 
         return o
 
-    def process(self):
+    def process(self, confidence=None):
         output = self.csv.sensor_data[DataType.ODOMETRY]
 
         estimated = []
@@ -76,13 +76,22 @@ class ROSMetrics:
 
         un = ['m', 'm', 'm', '$\\frac{m}{s}$', "rad", "rad"]
 
+        j = 0
+
+        confidence = np.round(confidence, 3)
+
         for i, r, m, u in zip(x, rmse, mae, un):
-            r = np.round(r, 5)
-            m = np.round(m, 5)
+            r = np.round(r, 4)
+            m = np.round(m, 4)
 
-            print(f"RMSE {i} & {r} {u} & MAE {i} & {m} {u} \\\\")
+            if confidence is None:
+                print(f"RMSE {i} & {r} {u} & MAE {i} & {m} {u} \\\\")
+            else:
+                print(f"RMSE {i} & {r} {u} $\pm$ {confidence[j]} {u} & MAE {i} & {m} {u} $\pm$ {confidence[j + len(rmse) + 1]} {u} \\\\")
 
-        print(f"RMSE pose & {rmse_pos:.5f} m & MAE pose & {mae_pos:.5f} m \\\\")
+            j += 1
+
+        print(f"RMSE pose & {rmse_pos:.5f} m $\pm$ {confidence[len(rmse)]} m & MAE pose & {mae_pos:.5f} m $\pm$ {confidence[-1]} m \\\\")
 
         t = np.arange(0, len(estimated))
 
@@ -108,6 +117,29 @@ class ROSMetrics:
 
         return rmse
 
+    def compute_errors(self):
+        output = self.csv.sensor_data[DataType.ODOMETRY]
+
+        estimated = []
+        actual = []
+
+        for datapoint in output:
+            datapoint: DataPoint
+
+            closest_gt = self.get_closest_ground_truth(datapoint.timestamp)
+            estimated.append(datapoint.measurement_data)
+            actual.append(closest_gt)
+
+        estimated = np.array(estimated)
+        actual = np.array(actual)
+
+        rmse = self.calculate_rsme(estimated, actual)
+        rmse_pos = self.calculate_rsme_pose(estimated, actual)
+        mae_pos = self.calculate_mae_pose(estimated, actual)
+        mae = self.calculate_mae(estimated, actual)
+
+        return np.stack([*rmse, rmse_pos, *mae, mae_pos])
+
     def calculate_rsme_pose(self, estimated, actual):
         return np.mean(np.linalg.norm((estimated - actual)[:, :3], axis=1) ** 2)
 
@@ -115,6 +147,29 @@ class ROSMetrics:
         return np.mean(np.linalg.norm((estimated - actual)[:, :3], axis=1))
 
 
+def compute_interval(folder='temp'):
+    data = []
+
+    for i in range(5):
+        a = ROSMetrics(f'{folder}/out{i + 1}.csv')
+        data.append(a.compute_errors())
+
+    data = np.array(data)
+
+    stds = np.std(data, axis=0)
+
+    z_star = 1.96
+
+    confidence = z_star * stds / np.sqrt(data.shape[0])
+
+    print(np.round(confidence, 5))
+
+    return confidence
+
+
 if __name__ == '__main__':
+    confidence = compute_interval()
+
     a = ROSMetrics('data/data.csv')
-    a.process()
+    # a = ROSMetrics('temp/out1.csv')
+    a.process(confidence)
